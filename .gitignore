@@ -1,0 +1,74 @@
+# ──────────────────────────────────────────────
+# Gradle
+# ──────────────────────────────────────────────
+.gradle/
+build/
+**/build/
+gradle-app.setting
+!gradle-wrapper.jar
+!gradle-wrapper.properties
+
+# ──────────────────────────────────────────────
+# Android Studio / IntelliJ
+# ──────────────────────────────────────────────
+*.iml
+.idea/
+captures/
+.externalNativeBuild/
+.cxx/
+*.hprof
+
+# Keep nothing from .idea except (optional) code style/run configs.
+# If you want to share run configs, comment the .idea/ line above and
+# uncomment the lines below instead:
+# .idea/*
+# !.idea/codeStyles/
+# !.idea/runConfigurations/
+
+# ──────────────────────────────────────────────
+# Local / machine-specific config (NEVER commit)
+# ──────────────────────────────────────────────
+local.properties
+*.local
+
+# ──────────────────────────────────────────────
+# Signing keys & secrets (NEVER commit)
+# ──────────────────────────────────────────────
+*.jks
+*.keystore
+keystore.properties
+release.properties
+google-services.json
+
+# ──────────────────────────────────────────────
+# Build outputs
+# ──────────────────────────────────────────────
+*.apk
+*.aab
+*.ap_
+*.aar
+*.dex
+*.class
+output.json
+release/
+debug/
+
+# ──────────────────────────────────────────────
+# Logs & temp
+# ──────────────────────────────────────────────
+*.log
+*.tmp
+*.bak
+.DS_Store
+Thumbs.db
+
+# ──────────────────────────────────────────────
+# NDK / native (kalau dipakai)
+# ──────────────────────────────────────────────
+obj/
+.cxx/
+
+# ──────────────────────────────────────────────
+# Kotlin
+# ──────────────────────────────────────────────
+.kotlin/
