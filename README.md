@@ -4,7 +4,7 @@
 
 # nexfin
 
-**nexfin is the next Jellyfin client for Android** — a fast, native player for streaming your own self-hosted movie & series collection.
+**nexfin is the next Jellyfin client for Android** — a simple, clean, native player for streaming your own self-hosted movie & series collection.
 
 [![Platform](https://img.shields.io/badge/Platform-Android-3DDC84?logo=android&logoColor=white&style=for-the-badge)](https://www.android.com/)
 [![Kotlin](https://img.shields.io/badge/Kotlin-7F52FF?logo=kotlin&logoColor=white&style=for-the-badge)](https://kotlinlang.org/)
@@ -20,9 +20,24 @@
 
 **nexfin** is a native Android client for [Jellyfin](https://jellyfin.org), the free software media system. Point it at your own self-hosted Jellyfin server and stream your personal film and series library anywhere — no third-party accounts, no telemetry, no cloud middleman.
 
-Built entirely from scratch with **Kotlin** and **Jetpack Compose** (single-Activity architecture), nexfin focuses on a clean, dark, glassmorphic interface with an adaptive layout that reshapes itself for both phones and tablets.
+Built entirely from scratch with **Kotlin** and **Jetpack Compose** (single-Activity architecture), nexfin focuses on keeping things simple — a clean, dark interface that stays out of your way and lets you focus on what matters: watching your content.
 
 > **Disclaimer:** nexfin is an independent, unofficial client and is **not affiliated with or endorsed by the Jellyfin project**.
+
+---
+
+## ⚠️ Early Version Notice
+
+nexfin is a **personal side project** built in my spare time — it is not a full-time or commercial product.
+
+This is the **earliest public release (v1.0.0)**, and as such, you should expect:
+
+- Bugs and rough edges that haven't been ironed out yet
+- Missing features that are still on the roadmap
+- Occasional crashes or unexpected behavior on certain devices or server configurations
+- Limited testing — primarily tested against a personal self-hosted Jellyfin server
+
+I'm sharing this openly in the hope that it's useful to others in the self-hosted community, and I'll continue improving it as time allows. If you run into issues or have suggestions, feel free to open an Issue — all feedback is welcome.
 
 ---
 
@@ -42,7 +57,7 @@ Built entirely from scratch with **Kotlin** and **Jetpack Compose** (single-Acti
 ### Experience
 - **3 UI languages**: Indonesia · English · 中文
 - **Adaptive layout** — Mobile (portrait) and Tablet (landscape with sidebar)
-- **Dark theme** with purple accents and **glassmorphism** blur effects
+- **Dark theme** with purple accents — clean and minimal
 - App icon: a neon purple glowing **"N"**
 
 ### Account
@@ -68,7 +83,7 @@ Built entirely from scratch with **Kotlin** and **Jetpack Compose** (single-Acti
 | UI | Jetpack Compose (single Activity) |
 | Networking | OkHttp (Jellyfin REST API) |
 | Image loading | Coil |
-| Glassmorphism / blur | [Haze](https://github.com/chrisbanes/haze) `0.7.3` |
+| UI blur effects | [Haze](https://github.com/chrisbanes/haze) `0.7.3` |
 | Video playback | Media3 / ExoPlayer |
 | Offline | Local storage download management |
 
@@ -88,7 +103,7 @@ Built entirely from scratch with **Kotlin** and **Jetpack Compose** (single-Acti
 ### Clone
 
 ```bash
-git clone https://github.com/USERNAME/nexfin.git
+git clone https://github.com/blightsore73/nexfin.git
 cd nexfin
 ```
 
@@ -150,5 +165,5 @@ Distributed under the **GNU General Public License v3.0**. See [`LICENSE`](LICEN
 ## Acknowledgements
 
 - The [Jellyfin](https://jellyfin.org) project and community for the open media server.
-- [Haze](https://github.com/chrisbanes/haze) by Chris Banes for the blur effects.
+- [Haze](https://github.com/chrisbanes/haze) by Chris Banes for blur effects.
 - [Media3 / ExoPlayer](https://developer.android.com/media/media3) for playback.
