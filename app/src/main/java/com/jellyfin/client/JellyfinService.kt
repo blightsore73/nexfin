@@ -2,6 +2,7 @@ package com.jellyfin.client
 
 import android.os.Handler
 import android.os.Looper
+import android.util.Log
 import com.google.gson.Gson
 import com.google.gson.JsonObject
 import okhttp3.Call
@@ -189,8 +190,12 @@ object JellyfinService {
         callback: (List<JellyfinItem>) -> Unit
     ) {
         val cleanUrl = serverUrl.trimEnd('/')
-        val url = "$cleanUrl/Users/$userId/Items/Resume?fields=PrimaryImageAspectRatio,BackdropImageTags"
-        val authHeader = "MediaBrowser Client=\"Jellyfin Client Android\", Device=\"Emulator\", DeviceId=\"device\", Version=\"1.0.0\", Token=\"$accessToken\""
+        // MediaTypes=Video memastikan hanya video (bukan audio/ebook) yang dikembalikan
+        // UserData diperlukan untuk PlaybackPositionTicks
+        val url = "$cleanUrl/Users/$userId/Items/Resume?MediaTypes=Video&fields=UserData,PrimaryImageAspectRatio,BackdropImageTags,RunTimeTicks"
+        val authHeader = "MediaBrowser Client=\"Jellyfin Client Android\", Device=\"Nexfin\", DeviceId=\"nexfin-android\", Version=\"1.0.0\", Token=\"$accessToken\""
+
+        Log.d("Nexfin", "fetchResumeItems → $url")
 
         val request = Request.Builder()
             .url(url)
@@ -200,45 +205,54 @@ object JellyfinService {
 
         client.newCall(request).enqueue(object : Callback {
             override fun onFailure(call: Call, e: IOException) {
+                Log.e("Nexfin", "fetchResumeItems FAILED: ${e.message}")
                 mainHandler.post { callback(emptyList()) }
             }
 
             override fun onResponse(call: Call, response: Response) {
                 val bodyStr = response.body?.string()
+                Log.d("Nexfin", "fetchResumeItems HTTP ${response.code}, body length=${bodyStr?.length}")
                 if (response.isSuccessful && !bodyStr.isNullOrEmpty()) {
                     try {
                         val json = gson.fromJson(bodyStr, JsonObject::class.java)
                         val itemsArray = json.getAsJsonArray("Items")
+                        Log.d("Nexfin", "fetchResumeItems: ${itemsArray?.size()} items from server")
                         val list = mutableListOf<JellyfinItem>()
-                        for (i in 0 until itemsArray.size()) {
-                            val itemObj = itemsArray.get(i).asJsonObject
-                            val id = itemObj.get("Id").asString
-                            val name = itemObj.get("Name").asString
-                            val type = itemObj.get("Type").asString
-                            
-                            val backdropTags = itemObj.getAsJsonArray("BackdropImageTags")
-                            val hasBackdrop = backdropTags != null && backdropTags.size() > 0
-                            val imageUrl = if (hasBackdrop) {
-                                "$cleanUrl/Items/$id/Images/Backdrop/0?api_key=$accessToken"
-                            } else {
-                                "$cleanUrl/Items/$id/Images/Primary?api_key=$accessToken"
+                        for (i in 0 until (itemsArray?.size() ?: 0)) {
+                            try {
+                                val itemObj = itemsArray.get(i).asJsonObject
+                                val id = itemObj.get("Id").asString
+                                val name = itemObj.get("Name").asString
+                                val type = itemObj.get("Type").asString
+
+                                val backdropTags = itemObj.getAsJsonArray("BackdropImageTags")
+                                val hasBackdrop = backdropTags != null && backdropTags.size() > 0
+                                val imageUrl = "$cleanUrl/Items/$id/Images/Primary?api_key=$accessToken"
+                                val backdropUrl = if (hasBackdrop) {
+                                    "$cleanUrl/Items/$id/Images/Backdrop/0?api_key=$accessToken"
+                                } else null
+                                val streamUrl = "$cleanUrl/Videos/$id/stream?static=true&api_key=$accessToken"
+
+                                val userData = itemObj.getAsJsonObject("UserData")
+                                val posTicks = userData?.get("PlaybackPositionTicks")?.asLong ?: 0L
+                                val runTimeTicks = itemObj.get("RunTimeTicks")?.asLong ?: 0L
+
+                                val posMs = posTicks / 10000L
+                                val durMs = runTimeTicks / 10000L
+
+                                Log.d("Nexfin", "  resume item: $name ($type) pos=${posMs}ms dur=${durMs}ms")
+                                list.add(JellyfinItem(id, name, type, imageUrl, streamUrl, posMs, durMs, backdropUrl = backdropUrl))
+                            } catch (itemEx: Exception) {
+                                Log.e("Nexfin", "fetchResumeItems: error parsing item $i: ${itemEx.message}")
                             }
-                            val streamUrl = "$cleanUrl/Videos/$id/stream?static=true&api_key=$accessToken"
-
-                            val userData = itemObj.getAsJsonObject("UserData")
-                            val posTicks = userData?.get("PlaybackPositionTicks")?.asLong ?: 0L
-                            val runTimeTicks = itemObj.get("RunTimeTicks")?.asLong ?: 0L
-                            
-                            val posMs = posTicks / 10000L
-                            val durMs = runTimeTicks / 10000L
-
-                            list.add(JellyfinItem(id, name, type, imageUrl, streamUrl, posMs, durMs))
                         }
                         mainHandler.post { callback(list) }
                     } catch (e: Exception) {
+                        Log.e("Nexfin", "fetchResumeItems: JSON parse error: ${e.message}")
                         mainHandler.post { callback(emptyList()) }
                     }
                 } else {
+                    Log.e("Nexfin", "fetchResumeItems: not successful or empty body, code=${response.code}")
                     mainHandler.post { callback(emptyList()) }
                 }
             }
@@ -366,7 +380,7 @@ object JellyfinService {
                             val epImageUrl = "$cleanUrl/Items/$epId/Images/Primary?api_key=$accessToken"
                             val epStreamUrl = "$cleanUrl/Videos/$epId/stream?static=true&api_key=$accessToken"
 
-                            list.add(JellyfinEpisode(epId, epName, seasonNumber, episodeNumber, epOverview, epImageUrl, epStreamUrl, playbackPositionTicks))
+                            list.add(JellyfinEpisode(epId, epName, seasonNumber, episodeNumber, epOverview, epImageUrl, epStreamUrl, playbackPositionTicks, seriesId))
                         }
                         mainHandler.post { callback(list) }
                     } catch (e: Exception) {
@@ -549,6 +563,72 @@ object JellyfinService {
             }
         })
     }
+
+    // Ambil URL stream local trailer pertama untuk suatu item (film/serial)
+    // Mengembalikan URL string atau null jika tidak ada local trailer
+    fun fetchLocalTrailers(
+        serverUrl: String,
+        accessToken: String,
+        userId: String,
+        itemId: String,
+        callback: (String?) -> Unit
+    ) {
+        val cleanUrl = serverUrl.trimEnd('/')
+        val url = "$cleanUrl/Users/$userId/Items/$itemId/LocalTrailers"
+        val authHeader = "MediaBrowser Client=\"Jellyfin Client Android\", Device=\"Nexfin\", DeviceId=\"nexfin-android\", Version=\"1.0.0\", Token=\"$accessToken\""
+
+        val request = Request.Builder()
+            .url(url)
+            .get()
+            .addHeader("X-Emby-Authorization", authHeader)
+            .build()
+
+        client.newCall(request).enqueue(object : Callback {
+            override fun onFailure(call: Call, e: IOException) {
+                mainHandler.post { callback(null) }
+            }
+            override fun onResponse(call: Call, response: Response) {
+                val bodyStr = response.body?.string()
+                if (response.isSuccessful && !bodyStr.isNullOrEmpty()) {
+                    try {
+                        val arr = gson.fromJson(bodyStr, com.google.gson.JsonArray::class.java)
+                        val trailerId = if (arr.size() > 0) arr.get(0).asJsonObject.get("Id").asString else null
+                        val trailerUrl = trailerId?.let {
+                            "$cleanUrl/Videos/$it/stream?static=true&api_key=$accessToken"
+                        }
+                        mainHandler.post { callback(trailerUrl) }
+                    } catch (e: Exception) {
+                        mainHandler.post { callback(null) }
+                    }
+                } else {
+                    mainHandler.post { callback(null) }
+                }
+            }
+        })
+    }
+
+    // Tandai item sebagai sudah ditonton sepenuhnya → hilang dari Continue Watching di server
+    fun markAsPlayed(
+        serverUrl: String,
+        accessToken: String,
+        userId: String,
+        itemId: String
+    ) {
+        val cleanUrl = serverUrl.trimEnd('/')
+        val url = "$cleanUrl/Users/$userId/PlayedItems/$itemId"
+        val authHeader = "MediaBrowser Client=\"Jellyfin Client Android\", Device=\"Nexfin\", DeviceId=\"nexfin-android\", Version=\"1.0.0\", Token=\"$accessToken\""
+
+        val request = Request.Builder()
+            .url(url)
+            .post("".toRequestBody(null))
+            .addHeader("X-Emby-Authorization", authHeader)
+            .build()
+
+        client.newCall(request).enqueue(object : Callback {
+            override fun onFailure(call: Call, e: IOException) {}
+            override fun onResponse(call: Call, response: Response) { response.close() }
+        })
+    }
 }
 
 data class JellyfinSubtitle(
@@ -600,5 +680,6 @@ data class JellyfinEpisode(
     val overview: String?,
     val imageUrl: String,
     val streamUrl: String,
-    val playbackPositionTicks: Long = 0L
+    val playbackPositionTicks: Long = 0L,
+    val seriesId: String = ""
 )
