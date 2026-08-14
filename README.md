@@ -67,9 +67,11 @@ I'm sharing this openly in the hope that it's useful to others in the self-hoste
 
 ## Screenshots
 
-| Home | Movies | Shows |
-|:---:|:---:|:---:|
-| ![Home](docs/screenshots/home.png) | ![Movies](docs/screenshots/movies.png) | ![Shows](docs/screenshots/shows.png) |
+![Home](docs/screenshots/home.png)
+
+![Movies](docs/screenshots/movies.png)
+
+![Shows](docs/screenshots/shows.png)
 
 ---
 
