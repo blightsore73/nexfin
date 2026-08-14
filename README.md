@@ -67,11 +67,9 @@ I'm sharing this openly in the hope that it's useful to others in the self-hoste
 
 ## Screenshots
 
-> Replace these placeholders with real captures. Recommended: drop PNGs into `docs/screenshots/`.
-
-| Home | Continue Watching | Player | Tablet Layout |
-|:---:|:---:|:---:|:---:|
-| ![Home](docs/screenshots/home.png) | ![Continue Watching](docs/screenshots/continue.png) | ![Player](docs/screenshots/player.png) | ![Tablet](docs/screenshots/tablet.png) |
+| Home | Movies | Shows |
+|:---:|:---:|:---:|
+| ![Home](docs/screenshots/home.png) | ![Movies](docs/screenshots/movies.png) | ![Shows](docs/screenshots/shows.png) |
 
 ---
 
