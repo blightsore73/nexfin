@@ -67,11 +67,11 @@ I'm sharing this openly in the hope that it's useful to others in the self-hoste
 
 ## Screenshots
 
-![Home](docs/screenshots/home.png)
-
-![Movies](docs/screenshots/movies.png)
-
-![Shows](docs/screenshots/shows.png)
+<div align="center">
+<img src="docs/screenshots/home.png" width="250" alt="Home"/>
+<img src="docs/screenshots/movies.png" width="250" alt="Movies"/>
+<img src="docs/screenshots/shows.png" width="250" alt="Shows"/>
+</div>
 
 ---
 
